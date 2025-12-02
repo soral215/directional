@@ -1,8 +1,9 @@
 import axios from 'axios'
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import type { RequestConfig } from './types'
+import { useAuthStore } from '../stores/authStore'
 
-const BASE_URL = 'https://fe-hiring-rest-api.vercel.app'
+const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 const createClient = (): AxiosInstance => {
   const instance = axios.create({
@@ -13,7 +14,7 @@ const createClient = (): AxiosInstance => {
   })
 
   instance.interceptors.request.use((config) => {
-    const token = localStorage.getItem('accessToken')
+    const token = useAuthStore.getState().token
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
