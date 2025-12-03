@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { chartsApi } from '../api'
-import { ChartSection, ChartCard, ChartPlaceholder, BarChart } from '../components/charts'
+import { ChartSection, ChartCard, BarChart, DonutChart } from '../components/charts'
 
 export const ChartsPage = () => {
     const coffeeBrands = useQuery({
@@ -51,7 +51,15 @@ export const ChartsPage = () => {
                                 />
                             )}
                         </div>
-                        <ChartPlaceholder label="도넛 차트" />
+                        <div className="h-64">
+                            {coffeeBrands.data && (
+                                <DonutChart
+                                    data={coffeeBrands.data.data}
+                                    dataKey="popularity"
+                                    nameKey="brand"
+                                />
+                            )}
+                        </div>
                     </div>
                 </ChartCard>
                 <ChartCard
@@ -69,7 +77,15 @@ export const ChartsPage = () => {
                                 />
                             )}
                         </div>
-                        <ChartPlaceholder label="도넛 차트" />
+                        <div className="h-64">
+                            {snackBrands.data && (
+                                <DonutChart
+                                    data={snackBrands.data.data}
+                                    dataKey="share"
+                                    nameKey="name"
+                                />
+                            )}
+                        </div>
                     </div>
                 </ChartCard>
             </ChartSection>
