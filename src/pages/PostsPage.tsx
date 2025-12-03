@@ -4,75 +4,14 @@ import {
   useReactTable,
   getCoreRowModel,
   flexRender,
-  createColumnHelper,
 } from '@tanstack/react-table'
 import { postsApi } from '../api'
-import type { Post, Category, PostsParams } from '../api'
+import type { Post, Category, PostsParams, SortField, SortOrder } from '../api'
 import { useTableStore, useModalStore } from '../stores'
-import { Chip, Button, SearchInput } from '../components'
+import { Button, SearchInput } from '../components'
 import { PostDetailContent, PostForm, DeleteConfirmContent } from '../components/posts'
-import { categoryVariant } from '../constants/posts'
+import { postColumns, categories } from '../constants/posts'
 import { useDebounce } from '../hooks'
-
-const columnHelper = createColumnHelper<Post>()
-
-const columns = [
-  columnHelper.accessor('category', {
-    header: '카테고리',
-    minSize: 80,
-    cell: (info) => {
-      const category = info.getValue()
-      return <Chip variant={categoryVariant[category]}>{category}</Chip>
-    },
-  }),
-  columnHelper.accessor('title', {
-    header: '제목',
-    minSize: 120,
-    cell: (info) => (
-      <span className="font-medium">{info.getValue()}</span>
-    ),
-  }),
-  columnHelper.accessor('body', {
-    header: '내용',
-    minSize: 150,
-    cell: (info) => (
-      <span className="text-gray-400 line-clamp-1">{info.getValue()}</span>
-    ),
-  }),
-  columnHelper.accessor('tags', {
-    header: '태그',
-    minSize: 100,
-    cell: (info) => {
-      const tags = info.getValue()
-      if (tags.length === 0) return <span className="text-gray-600">-</span>
-      return (
-        <div className="flex gap-1 flex-wrap">
-          {tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="px-1.5 py-0.5 bg-gray-700 rounded text-xs text-gray-300">
-              {tag}
-            </span>
-          ))}
-          {tags.length > 2 && (
-            <span className="text-xs text-gray-500">+{tags.length - 2}</span>
-          )}
-        </div>
-      )
-    },
-  }),
-  columnHelper.accessor('createdAt', {
-    header: '작성일',
-    minSize: 90,
-    cell: (info) => (
-      <span className="text-gray-500 text-sm">
-        {new Date(info.getValue()).toLocaleDateString('ko-KR')}
-      </span>
-    ),
-  }),
-]
-
-
-type SortField = 'title' | 'createdAt'
-type SortOrder = 'asc' | 'desc'
 
 export function PostsPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -123,7 +62,7 @@ export function PostsPage() {
   useEffect(() => {
     if (Object.keys(columnSizing).length === 0) {
       const initialSizing: Record<string, number> = {}
-      columns.forEach((col) => {
+      postColumns.forEach((col) => {
         const id = (col.id || col.accessorKey) as string
         if (id && col.minSize) {
           initialSizing[id] = col.minSize
@@ -192,7 +131,7 @@ export function PostsPage() {
 
   const table = useReactTable({
     data: posts,
-    columns,
+    columns: postColumns,
     getCoreRowModel: getCoreRowModel(),
     columnResizeMode: 'onChange',
     state: {
@@ -282,9 +221,11 @@ export function PostsPage() {
           className="px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
         >
           <option value="">전체 카테고리</option>
-          <option value="NOTICE">NOTICE</option>
-          <option value="QNA">QNA</option>
-          <option value="FREE">FREE</option>
+          {
+            categories.map((category) => (
+              <option key={category} value={category}>{category}</option>
+            ))
+          }
         </select>
 
         <div className="relative" ref={columnMenuRef}>

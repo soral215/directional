@@ -1,6 +1,8 @@
 import { http } from './client'
 
 export type Category = 'NOTICE' | 'QNA' | 'FREE'
+export type SortField = 'title' | 'createdAt'
+export type SortOrder = 'asc' | 'desc'
 
 export interface Post {
   id: string
@@ -22,8 +24,8 @@ export interface PostsParams {
   limit?: number
   prevCursor?: string
   nextCursor?: string
-  sort?: 'title' | 'createdAt'
-  order?: 'asc' | 'desc'
+  sort?: SortField
+  order?: SortOrder
   category?: Category
   search?: string
   from?: string

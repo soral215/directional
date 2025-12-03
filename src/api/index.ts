@@ -8,5 +8,7 @@ export type {
   CreatePostRequest,
   UpdatePostRequest,
   Category,
+  SortField,
+  SortOrder,
 } from './posts'
 export type { ApiResponse, ApiError, RequestConfig } from './types'
