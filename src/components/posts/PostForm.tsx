@@ -12,7 +12,7 @@ interface PostFormProps {
   onCancel: () => void
 }
 
-export function PostForm({ post, onSuccess, onCancel }: PostFormProps) {
+export const PostForm = ({ post, onSuccess, onCancel }: PostFormProps) => {
   const isEdit = !!post
   const queryClient = useQueryClient()
 

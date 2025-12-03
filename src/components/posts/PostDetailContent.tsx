@@ -8,7 +8,7 @@ interface PostDetailContentProps {
   onDelete: () => void
 }
 
-export function PostDetailContent({ post, onEdit, onDelete }: PostDetailContentProps) {
+export const PostDetailContent = ({ post, onEdit, onDelete }: PostDetailContentProps) => {
   return (
     <div className="space-y-4">
       <table className="w-full text-sm">
@@ -61,4 +61,5 @@ export function PostDetailContent({ post, onEdit, onDelete }: PostDetailContentP
     </div>
   )
 }
+
 

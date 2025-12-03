@@ -5,7 +5,7 @@ import { authApi } from '../api'
 import { useAuthStore } from '../stores'
 import { Button, Input } from '../components'
 
-export function LoginPage() {
+export const LoginPage = () => {
     const navigate = useNavigate()
     const [email, setEmail] = useState('sora901215@gmail.com')
     const [password, setPassword] = useState('U7pQ9rS8T5')

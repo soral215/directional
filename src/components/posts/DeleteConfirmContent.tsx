@@ -7,7 +7,7 @@ interface DeleteConfirmProps {
   isLoading?: boolean
 }
 
-export function DeleteConfirmContent({ postTitle, onConfirm, onCancel, isLoading }: DeleteConfirmProps) {
+export const DeleteConfirmContent = ({ postTitle, onConfirm, onCancel, isLoading }: DeleteConfirmProps) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-500/20 rounded-full">

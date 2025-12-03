@@ -6,13 +6,13 @@ interface SearchInputProps {
   className?: string
 }
 
-export function SearchInput({
+export const SearchInput = ({
   value,
   onChange,
   placeholder = '검색...',
   isLoading = false,
   className = '',
-}: SearchInputProps) {
+}: SearchInputProps) => {
   return (
     <div className={`relative ${className}`}>
       {isLoading ? (

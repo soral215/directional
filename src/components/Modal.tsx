@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useModalStore } from '../stores/modalStore'
 
-export function Modal() {
+export const Modal = () => {
   const { isOpen, title, content, closeModal } = useModalStore()
 
   useEffect(() => {

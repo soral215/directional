@@ -24,7 +24,7 @@ const sizeStyles: Record<ButtonSize, string> = {
   lg: 'px-6 py-3 text-lg',
 }
 
-export function Button({
+export const Button = ({
   variant = 'primary',
   size = 'md',
   isLoading = false,
@@ -34,7 +34,7 @@ export function Button({
   className = '',
   onClick,
   ...props
-}: ButtonProps) {
+}: ButtonProps) => {
   const isThrottled = useRef(false)
 
   const handleClick = useCallback(

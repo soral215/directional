@@ -6,50 +6,56 @@ import {
   flexRender,
 } from '@tanstack/react-table'
 import { postsApi } from '../api'
-import type { Post, Category, PostsParams, SortField, SortOrder } from '../api'
+import type { Post, Category, SortField, SortOrder } from '../api'
 import { useTableStore, useModalStore } from '../stores'
 import { Button, SearchInput } from '../components'
 import { PostDetailContent, PostForm, DeleteConfirmContent } from '../components/posts'
 import { postColumns, categories } from '../constants/posts'
 import { useDebounce } from '../hooks'
 
-export function PostsPage() {
+export const PostsPage = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<Category | undefined>(undefined)
   const [sortField, setSortField] = useState<SortField | undefined>(undefined)
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
+  const [showColumnMenu, setShowColumnMenu] = useState(false)
+
+  const columnMenuRef = useRef<HTMLDivElement>(null)
+  const observerRef = useRef<IntersectionObserver | null>(null)
+
   const debouncedSearch = useDebounce(searchTerm, 300)
-
-  const params = useMemo<PostsParams>(() => ({
-    limit: 10,
-    search: debouncedSearch || undefined,
-    category: categoryFilter || undefined,
-    sort: sortField,
-    order: sortField ? sortOrder : undefined,
-  }), [debouncedSearch, categoryFilter, sortField, sortOrder])
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      if (sortOrder === 'desc') {
-        setSortOrder('asc')
-      } else {
-        setSortField(undefined)
-        setSortOrder('desc')
-      }
-    } else {
-      setSortField(field)
-      setSortOrder('desc')
-    }
-  }
 
   const columnSizing = useTableStore((state) => state.columnSizing)
   const setColumnSizing = useTableStore((state) => state.setColumnSizing)
   const columnVisibility = useTableStore((state) => state.columnVisibility)
   const setColumnVisibility = useTableStore((state) => state.setColumnVisibility)
-  const [showColumnMenu, setShowColumnMenu] = useState(false)
-  const columnMenuRef = useRef<HTMLDivElement>(null)
   const { openModal, closeModal } = useModalStore()
+
   const queryClient = useQueryClient()
+
+  const {
+    data,
+    isLoading,
+    isFetching,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['posts', debouncedSearch, categoryFilter, sortField, sortOrder],
+    queryFn: ({ pageParam }) =>
+      postsApi.getAll({
+        limit: 10,
+        search: debouncedSearch || undefined,
+        category: categoryFilter || undefined,
+        sort: sortField,
+        order: sortField ? sortOrder : undefined,
+        nextCursor: pageParam,
+      }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.data.nextCursor ?? undefined,
+    placeholderData: (previousData) => previousData,
+  })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => postsApi.delete(id),
@@ -57,6 +63,40 @@ export function PostsPage() {
       queryClient.invalidateQueries({ queryKey: ['posts'] })
       closeModal()
     },
+  })
+
+  const posts = useMemo(
+    () => data?.pages.flatMap((page) => page.data.items) ?? [],
+    [data]
+  )
+
+  const loadMoreRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (isFetchingNextPage) return
+      if (observerRef.current) observerRef.current.disconnect()
+
+      observerRef.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasNextPage) {
+          fetchNextPage()
+        }
+      })
+
+      if (node) observerRef.current.observe(node)
+    },
+    [isFetchingNextPage, hasNextPage, fetchNextPage]
+  )
+
+  const table = useReactTable({
+    data: posts,
+    columns: postColumns,
+    getCoreRowModel: getCoreRowModel(),
+    columnResizeMode: 'onChange',
+    state: {
+      columnSizing,
+      columnVisibility,
+    },
+    onColumnSizingChange: setColumnSizing,
+    onColumnVisibilityChange: setColumnVisibility,
   })
 
   useEffect(() => {
@@ -90,57 +130,19 @@ export function PostsPage() {
     }
   }, [showColumnMenu])
 
-  const {
-    data,
-    isLoading,
-    isFetching,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: ['posts', params],
-    queryFn: ({ pageParam }) =>
-      postsApi.getAll({ ...params, nextCursor: pageParam }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.data.nextCursor ?? undefined,
-    placeholderData: (previousData) => previousData,
-  })
-
-  const posts = useMemo(() => 
-    data?.pages.flatMap((page) => page.data.items) ?? [],
-    [data]
-  )
-
-  const observerRef = useRef<IntersectionObserver | null>(null)
-  const loadMoreRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (isFetchingNextPage) return
-      if (observerRef.current) observerRef.current.disconnect()
-
-      observerRef.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasNextPage) {
-          fetchNextPage()
-        }
-      })
-
-      if (node) observerRef.current.observe(node)
-    },
-    [isFetchingNextPage, hasNextPage, fetchNextPage]
-  )
-
-  const table = useReactTable({
-    data: posts,
-    columns: postColumns,
-    getCoreRowModel: getCoreRowModel(),
-    columnResizeMode: 'onChange',
-    state: {
-      columnSizing,
-      columnVisibility,
-    },
-    onColumnSizingChange: setColumnSizing,
-    onColumnVisibilityChange: setColumnVisibility,
-  })
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      if (sortOrder === 'desc') {
+        setSortOrder('asc')
+      } else {
+        setSortField(undefined)
+        setSortOrder('desc')
+      }
+    } else {
+      setSortField(field)
+      setSortOrder('desc')
+    }
+  }
 
   const handleCreate = () => {
     openModal({
@@ -221,11 +223,9 @@ export function PostsPage() {
           className="px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
         >
           <option value="">전체 카테고리</option>
-          {
-            categories.map((category) => (
-              <option key={category} value={category}>{category}</option>
-            ))
-          }
+          {categories.map((category) => (
+            <option key={category} value={category}>{category}</option>
+          ))}
         </select>
 
         <div className="relative" ref={columnMenuRef}>
@@ -297,7 +297,7 @@ export function PostsPage() {
                           onMouseDown={header.getResizeHandler()}
                           onTouchStart={header.getResizeHandler()}
                           onClick={(e) => e.stopPropagation()}
-                          className={`absolute top-0 right-0 w-1 h-full cursor-col-resize select-none touch-none transition-colors ${
+                          className={`absolute top-0 right-0 w-0.5 h-full cursor-col-resize select-none touch-none transition-colors ${
                             header.column.getIsResizing()
                               ? 'bg-blue-500'
                               : 'bg-gray-600 hover:bg-blue-400'

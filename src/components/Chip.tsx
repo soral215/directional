@@ -16,7 +16,7 @@ const variantStyles: Record<ChipVariant, string> = {
   blue: 'bg-blue-500/20 text-blue-400',
 }
 
-export function Chip({ variant = 'default', children, className = '' }: ChipProps) {
+export const Chip = ({ variant = 'default', children, className = '' }: ChipProps) => {
   return (
     <span className={`px-2 py-1 rounded text-xs font-medium ${variantStyles[variant]} ${className}`}>
       {children}

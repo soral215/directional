@@ -8,7 +8,7 @@ const menuItems = [
   { to: '/charts', label: '차트' },
 ]
 
-export function Layout() {
+export const Layout = () => {
   const { user, logout } = useAuthStore()
 
   return (
