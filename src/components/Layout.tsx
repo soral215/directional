@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../stores'
+import { healthApi } from '../api'
 import { Button } from './Button'
 import { NavItem } from './NavItem'
 
@@ -12,6 +14,13 @@ const menuItems = [
 export const Layout = () => {
   const { user, logout } = useAuthStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const health = useQuery({
+    queryKey: ['health'],
+    queryFn: () => healthApi.check(),
+    refetchInterval: 30000,
+    retry: 1,
+  })
 
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
@@ -25,7 +34,15 @@ export const Layout = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <h1 className="text-xl font-bold text-white">Directional</h1>
+          <h1 className="text-xl font-bold text-white flex items-center gap-2">
+            Directional
+            <span
+              className={`w-2 h-2 rounded-full ${
+                health.isLoading ? 'bg-yellow-500' : health.isSuccess ? 'bg-green-500' : 'bg-red-500'
+              }`}
+              title={health.isLoading ? '연결 확인중...' : health.isSuccess ? '서버 연결됨' : '서버 연결 안됨'}
+            />
+          </h1>
         </div>
         <div className="flex items-center gap-2 lg:gap-4">
           <span className="text-gray-300 text-sm lg:text-base hidden sm:block">{user?.email}</span>

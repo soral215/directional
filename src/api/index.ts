@@ -2,6 +2,9 @@ export { http, client } from './client'
 export { authApi } from './auth'
 export { postsApi } from './posts'
 export { chartsApi } from './charts'
+export const healthApi = {
+  check: () => import('./client').then(({ http }) => http.get('/health')),
+}
 export type {
   Post,
   PostsResponse,
