@@ -1,2 +1,5 @@
 export { Button } from './Button'
 export { Input } from './Input'
+export { Layout } from './Layout'
+export { NavItem } from './NavItem'
+export { PrivateRoute } from './PrivateRoute'
