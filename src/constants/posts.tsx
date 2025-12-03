@@ -25,6 +25,17 @@ export const categoryStyles: Record<Category, { active: string; inactive: string
 
 export const categories: Category[] = ['NOTICE', 'QNA', 'FREE']
 
+export const forbiddenWords = ['캄보디아', '프놈펜', '불법체류', '텔레그램']
+
+export const containsForbiddenWord = (text: string): string | null => {
+  for (const word of forbiddenWords) {
+    if (text.includes(word)) {
+      return word
+    }
+  }
+  return null
+}
+
 const columnHelper = createColumnHelper<Post>()
 
 export const postColumns = [

@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { postsApi } from '../../api'
 import type { Post, CreatePostRequest, Category } from '../../api'
 import { Button } from '../../components'
-import { categoryStyles, categories } from '../../constants/posts'
+import { categoryStyles, categories, containsForbiddenWord } from '../../constants/posts'
 
 interface PostFormProps {
   post?: Post
@@ -22,6 +22,7 @@ export const PostForm = ({ post, onSuccess, onCancel }: PostFormProps) => {
     category: post?.category ?? ('FREE' as Category),
     tags: post?.tags.join(', ') ?? '',
   })
+  const [forbiddenError, setForbiddenError] = useState<string | null>(null)
 
   const mutation = useMutation({
     mutationFn: (data: CreatePostRequest) =>
@@ -34,6 +35,20 @@ export const PostForm = ({ post, onSuccess, onCancel }: PostFormProps) => {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
+    setForbiddenError(null)
+
+    const titleForbidden = containsForbiddenWord(formData.title)
+    if (titleForbidden) {
+      setForbiddenError(`제목에 금칙어 "${titleForbidden}"이(가) 포함되어 있습니다.`)
+      return
+    }
+
+    const bodyForbidden = containsForbiddenWord(formData.body)
+    if (bodyForbidden) {
+      setForbiddenError(`내용에 금칙어 "${bodyForbidden}"이(가) 포함되어 있습니다.`)
+      return
+    }
+
     const tags = formData.tags
       .split(',')
       .map((tag) => tag.trim())
@@ -107,6 +122,10 @@ export const PostForm = ({ post, onSuccess, onCancel }: PostFormProps) => {
           className="w-full px-3 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
+
+      {forbiddenError && (
+        <p className="text-red-400 text-sm">{forbiddenError}</p>
+      )}
 
       {mutation.isError && (
         <p className="text-red-400 text-sm">
