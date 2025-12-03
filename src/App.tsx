@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { authApi } from './api'
 import { useAuthStore } from './stores'
+import { Button } from './components/Button'
 
 function App() {
   const [email, setEmail] = useState('sora901215@gmail.com')
@@ -23,7 +24,7 @@ function App() {
 
   return (
     <div>
-      <button onClick={handleLogin}>Login</button>
+      <Button onClick={handleLogin}>Login</Button>
     </div>
   )
 }
