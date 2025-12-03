@@ -120,11 +120,17 @@ export const MultiLineChart = ({
       })}
       <div className="flex items-center gap-4 ml-4 border-l border-gray-700 pl-4">
         <div className="flex items-center gap-1">
-          <div className="w-4 h-0.5 bg-gray-400" />
+          <svg width="16" height="16" viewBox="0 0 16 16">
+            <line x1="0" y1="8" x2="16" y2="8" stroke="#9ca3af" strokeWidth="2" />
+            <circle cx="8" cy="8" r="3" fill="#9ca3af" />
+          </svg>
           <span className="text-gray-500 text-xs">{primaryLabel}</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-4 h-0.5 bg-gray-400 border-dashed border-t-2 border-gray-400" style={{ borderStyle: 'dashed' }} />
+          <svg width="16" height="16" viewBox="0 0 16 16">
+            <line x1="0" y1="8" x2="16" y2="8" stroke="#9ca3af" strokeWidth="2" strokeDasharray="3 2" />
+            <rect x="5" y="5" width="6" height="6" fill="#9ca3af" />
+          </svg>
           <span className="text-gray-500 text-xs">{secondaryLabel}</span>
         </div>
       </div>
@@ -172,7 +178,10 @@ export const MultiLineChart = ({
                   dataKey={`${s.name}_primary`}
                   stroke={color}
                   strokeWidth={2}
-                  dot={{ r: 4, fill: color }}
+                  dot={(props) => {
+                    const { cx, cy } = props as { cx: number; cy: number }
+                    return <circle cx={cx} cy={cy} r={4} fill={color} />
+                  }}
                   activeDot={{ r: 6 }}
                   onMouseEnter={() => setHoveredSeries(s.name)}
                   onMouseLeave={() => setHoveredSeries(null)}
@@ -192,7 +201,10 @@ export const MultiLineChart = ({
                   stroke={color}
                   strokeWidth={2}
                   strokeDasharray="5 5"
-                  dot={{ r: 4, fill: color, strokeWidth: 0 }}
+                  dot={(props) => {
+                    const { cx, cy } = props as { cx: number; cy: number }
+                    return <rect x={cx - 4} y={cy - 4} width={8} height={8} fill={color} />
+                  }}
                   activeDot={{ r: 6 }}
                   onMouseEnter={() => setHoveredSeries(s.name)}
                   onMouseLeave={() => setHoveredSeries(null)}
