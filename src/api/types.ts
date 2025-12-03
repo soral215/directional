@@ -15,7 +15,7 @@ export interface ApiError {
 }
 
 export interface RequestConfig {
-  params?: Record<string, unknown>
+  params?: object
   headers?: Record<string, string>
 }
 
