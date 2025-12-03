@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import type { FormEvent } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   useReactTable,
   getCoreRowModel,
@@ -7,7 +8,7 @@ import {
   createColumnHelper,
 } from '@tanstack/react-table'
 import { postsApi } from '../api'
-import type { Post, PostsParams, Category } from '../api'
+import type { Post, PostsParams, Category, UpdatePostRequest } from '../api'
 import { useTableStore, useModalStore } from '../stores'
 import { Chip, Button } from '../components'
 
@@ -133,6 +134,136 @@ function PostDetailContent({ post, onEdit, onDelete }: PostDetailContentProps) {
   )
 }
 
+interface PostEditFormProps {
+  post: Post
+  onSuccess: () => void
+  onCancel: () => void
+}
+
+function PostEditForm({ post, onSuccess, onCancel }: PostEditFormProps) {
+  const queryClient = useQueryClient()
+  const [formData, setFormData] = useState({
+    title: post.title,
+    body: post.body,
+    category: post.category,
+    tags: post.tags.join(', '),
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: (data: UpdatePostRequest) => postsApi.update(post.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] })
+      onSuccess()
+    },
+  })
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    const tags = formData.tags
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0)
+
+    updateMutation.mutate({
+      title: formData.title,
+      body: formData.body,
+      category: formData.category,
+      tags,
+    })
+  }
+
+  const categoryStyles: Record<Category, { active: string; inactive: string }> = {
+    NOTICE: {
+      active: 'bg-red-500/30 text-red-400 border-red-500/50',
+      inactive: 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-red-500/10 hover:text-red-400',
+    },
+    QNA: {
+      active: 'bg-yellow-500/30 text-yellow-400 border-yellow-500/50',
+      inactive: 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-yellow-500/10 hover:text-yellow-400',
+    },
+    FREE: {
+      active: 'bg-green-500/30 text-green-400 border-green-500/50',
+      inactive: 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-green-500/10 hover:text-green-400',
+    },
+  }
+
+  const categories: Category[] = ['NOTICE', 'QNA', 'FREE']
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div>
+        <label className="block text-sm font-medium text-gray-400 mb-2">카테고리</label>
+        <div className="flex gap-2">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setFormData({ ...formData, category: cat })}
+              className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
+                formData.category === cat
+                  ? categoryStyles[cat].active
+                  : categoryStyles[cat].inactive
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-400 mb-2">
+          제목 <span className="text-red-400">*</span>
+        </label>
+        <input
+          type="text"
+          value={formData.title}
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          required
+          className="w-full px-3 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-400 mb-2">
+          내용 <span className="text-red-400">*</span>
+        </label>
+        <textarea
+          value={formData.body}
+          onChange={(e) => setFormData({ ...formData, body: e.target.value })}
+          required
+          rows={6}
+          className="w-full px-3 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-400 mb-2">태그</label>
+        <input
+          type="text"
+          value={formData.tags}
+          onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+          placeholder="쉼표(,)로 구분하여 입력"
+          className="w-full px-3 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+      </div>
+
+      {updateMutation.isError && (
+        <p className="text-red-400 text-sm">수정 중 오류가 발생했습니다.</p>
+      )}
+
+      <div className="flex justify-end gap-3 pt-4 border-t border-gray-700">
+        <Button type="button" variant="secondary" onClick={onCancel}>
+          취소
+        </Button>
+        <Button type="submit" variant="primary" isLoading={updateMutation.isPending}>
+          저장
+        </Button>
+      </div>
+    </form>
+  )
+}
+
 export function PostsPage() {
   const [params] = useState<PostsParams>({ limit: 10 })
   const { columnSizing, setColumnSizing } = useTableStore()
@@ -170,8 +301,16 @@ export function PostsPage() {
   })
 
   const handleEdit = (post: Post) => {
-    closeModal()
-    console.log('수정:', post.id)
+    openModal({
+      title: '게시글 수정',
+      content: (
+        <PostEditForm
+          post={post}
+          onSuccess={closeModal}
+          onCancel={closeModal}
+        />
+      ),
+    })
   }
 
   const handleDelete = (post: Post) => {
