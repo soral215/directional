@@ -70,9 +70,6 @@ const columns = [
   }),
 ]
 
-// ... existing code ...
-// Remove PostDetailContent, PostForm, DeleteConfirmContent components and interfaces
-// They are now imported from '../components/posts'
 
 type SortField = 'title' | 'createdAt'
 type SortOrder = 'asc' | 'desc'
@@ -108,6 +105,10 @@ export function PostsPage() {
 
   const columnSizing = useTableStore((state) => state.columnSizing)
   const setColumnSizing = useTableStore((state) => state.setColumnSizing)
+  const columnVisibility = useTableStore((state) => state.columnVisibility)
+  const setColumnVisibility = useTableStore((state) => state.setColumnVisibility)
+  const [showColumnMenu, setShowColumnMenu] = useState(false)
+  const columnMenuRef = useRef<HTMLDivElement>(null)
   const { openModal, closeModal } = useModalStore()
   const queryClient = useQueryClient()
 
@@ -133,6 +134,22 @@ export function PostsPage() {
       }
     }
   }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (columnMenuRef.current && !columnMenuRef.current.contains(event.target as Node)) {
+        setShowColumnMenu(false)
+      }
+    }
+
+    if (showColumnMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showColumnMenu])
 
   const {
     data,
@@ -180,8 +197,10 @@ export function PostsPage() {
     columnResizeMode: 'onChange',
     state: {
       columnSizing,
+      columnVisibility,
     },
     onColumnSizingChange: setColumnSizing,
+    onColumnVisibilityChange: setColumnVisibility,
   })
 
   const handleCreate = () => {
@@ -267,6 +286,35 @@ export function PostsPage() {
           <option value="QNA">QNA</option>
           <option value="FREE">FREE</option>
         </select>
+
+        <div className="relative" ref={columnMenuRef}>
+          <Button
+            variant="secondary"
+            onClick={() => setShowColumnMenu(!showColumnMenu)}
+          >
+            컬럼 항목 설정
+          </Button>
+          {showColumnMenu && (
+            <div className="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-10 min-w-40">
+              {table.getAllLeafColumns().map((column) => (
+                <label
+                  key={column.id}
+                  className="flex items-center gap-2 px-3 py-2 hover:bg-gray-700 cursor-pointer text-sm text-white"
+                >
+                  <input
+                    type="checkbox"
+                    checked={column.getIsVisible()}
+                    onChange={column.getToggleVisibilityHandler()}
+                    className="rounded border-gray-600 bg-gray-900 text-blue-500 focus:ring-blue-500 focus:ring-offset-gray-800"
+                  />
+                  {typeof column.columnDef.header === 'string' 
+                    ? column.columnDef.header 
+                    : column.id}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="bg-gray-800/50 rounded-xl border border-gray-700/50 w-fit">
@@ -362,8 +410,6 @@ export function PostsPage() {
             <p>게시글이 없습니다.</p>
           </div>
         ) : null}
-
-        {/* 무한 스크롤 트리거 및 로딩 표시 */}
         {hasNextPage && (
           <div
             ref={loadMoreRef}
