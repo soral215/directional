@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { FormEvent } from 'react'
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   useReactTable,
   getCoreRowModel,
@@ -366,40 +366,12 @@ export function PostsPage() {
     }
   }, [])
 
-  const {
-    data,
-    isLoading,
-    isFetching,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
+  const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ['posts', params],
-    queryFn: ({ pageParam }) =>
-      postsApi.getAll({ ...params, nextCursor: pageParam }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.data.nextCursor ?? undefined,
+    queryFn: () => postsApi.getAll(params),
   })
 
-  const posts = data?.pages.flatMap((page) => page.data.items) ?? []
-
-  const observerRef = useRef<IntersectionObserver | null>(null)
-  const loadMoreRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (isFetchingNextPage) return
-      if (observerRef.current) observerRef.current.disconnect()
-
-      observerRef.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasNextPage) {
-          fetchNextPage()
-        }
-      })
-
-      if (node) observerRef.current.observe(node)
-    },
-    [isFetchingNextPage, hasNextPage, fetchNextPage]
-  )
+  const posts = data?.data.items ?? []
 
   const table = useReactTable({
     data: posts,
@@ -590,31 +562,6 @@ export function PostsPage() {
             <p>게시글이 없습니다.</p>
           </div>
         ) : null}
-
-        {hasNextPage && (
-          <div
-            ref={loadMoreRef}
-            className="flex items-center justify-center py-4"
-          >
-            {isFetchingNextPage ? (
-              <div className="flex items-center gap-2 text-gray-400">
-                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                <span>불러오는 중...</span>
-              </div>
-            ) : (
-              <span className="text-gray-600 text-sm">스크롤하여 더 보기</span>
-            )}
-          </div>
-        )}
-
-        {!hasNextPage && posts.length > 0 && (
-          <div className="flex items-center justify-center py-4">
-            <span className="text-gray-600 text-sm">모든 게시글을 불러왔습니다</span>
-          </div>
-        )}
       </div>
     </div>
   )
