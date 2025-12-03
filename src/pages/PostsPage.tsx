@@ -8,7 +8,7 @@ import {
   createColumnHelper,
 } from '@tanstack/react-table'
 import { postsApi } from '../api'
-import type { Post, PostsParams, Category, UpdatePostRequest } from '../api'
+import type { Post, Category, UpdatePostRequest, PostsParams } from '../api'
 import { useTableStore, useModalStore } from '../stores'
 import { Chip, Button, SearchInput } from '../components'
 import { useDebounce } from '../hooks'
@@ -304,12 +304,14 @@ function DeleteConfirmContent({ postTitle, onConfirm, onCancel, isLoading }: Del
 
 export function PostsPage() {
   const [searchTerm, setSearchTerm] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState<Category | undefined>(undefined)
   const debouncedSearch = useDebounce(searchTerm, 300)
 
   const params = useMemo<PostsParams>(() => ({
     limit: 10,
     search: debouncedSearch || undefined,
-  }), [debouncedSearch])
+    category: categoryFilter || undefined,
+  }), [debouncedSearch, categoryFilter])
 
   const { columnSizing, setColumnSizing } = useTableStore()
   const { openModal, closeModal } = useModalStore()
@@ -398,7 +400,7 @@ export function PostsPage() {
     <div>
       <h2 className="text-2xl font-bold text-white mb-6">게시판</h2>
 
-      <div className="mb-4">
+      <div className="flex items-center gap-4 mb-4">
         <SearchInput
           value={searchTerm}
           onChange={setSearchTerm}
@@ -406,6 +408,20 @@ export function PostsPage() {
           isLoading={isFetching}
           className="w-80"
         />
+
+        <select
+          value={categoryFilter ?? ''}
+          onChange={(e) => {
+            const value = e.target.value
+            setCategoryFilter(value === '' ? undefined : value as Category)
+          }}
+          className="px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+        >
+          <option value="">전체 카테고리</option>
+          <option value="NOTICE">NOTICE</option>
+          <option value="QNA">QNA</option>
+          <option value="FREE">FREE</option>
+        </select>
       </div>
 
       <div className="bg-gray-800/50 rounded-xl border border-gray-700/50 w-fit">
