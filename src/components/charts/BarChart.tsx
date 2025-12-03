@@ -27,7 +27,7 @@ export const BarChart = <T,>({
       <RechartsBarChart
         data={data}
         layout="vertical"
-        margin={{ top: 5, right: 20, left: 40, bottom: 5 }}
+        margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
         <XAxis type="number" stroke="#9ca3af" fontSize={12} />
