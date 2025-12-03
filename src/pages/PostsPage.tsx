@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { FormEvent } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -199,7 +199,7 @@ function PostEditForm({ post, onSuccess, onCancel }: PostEditFormProps) {
               key={cat}
               type="button"
               onClick={() => setFormData({ ...formData, category: cat })}
-              className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
+              className={`cursor-pointer px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
                 formData.category === cat
                   ? categoryStyles[cat].active
                   : categoryStyles[cat].inactive
@@ -301,8 +301,26 @@ function DeleteConfirmContent({ postTitle, onConfirm, onCancel, isLoading }: Del
   )
 }
 
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay)
+    return () => clearTimeout(timer)
+  }, [value, delay])
+
+  return debouncedValue
+}
+
 export function PostsPage() {
-  const [params] = useState<PostsParams>({ limit: 10 })
+  const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearch = useDebounce(searchTerm, 300)
+
+  const params = useMemo<PostsParams>(() => ({
+    limit: 10,
+    search: debouncedSearch || undefined,
+  }), [debouncedSearch])
+
   const { columnSizing, setColumnSizing } = useTableStore()
   const { openModal, closeModal } = useModalStore()
   const queryClient = useQueryClient()
@@ -328,7 +346,7 @@ export function PostsPage() {
     }
   }, [])
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ['posts', params],
     queryFn: () => postsApi.getAll(params),
   })
@@ -386,25 +404,55 @@ export function PostsPage() {
     })
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-gray-400">로딩중...</p>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-red-400">에러 발생</p>
-      </div>
-    )
-  }
-
   return (
     <div>
       <h2 className="text-2xl font-bold text-white mb-6">게시판</h2>
+
+      <div className="mb-4">
+        <div className="relative w-80">
+          {isFetching ? (
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400 animate-spin"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+          ) : (
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          )}
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="제목, 내용 검색..."
+            className="w-full pl-10 pr-10 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
 
       <div className="bg-gray-800/50 rounded-xl border border-gray-700/50 w-fit">
         <table className="w-full text-white table-fixed">
@@ -464,14 +512,22 @@ export function PostsPage() {
           </tbody>
         </table>
 
-        {posts.length === 0 && (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <p className="text-gray-400">로딩중...</p>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center py-16">
+            <p className="text-red-400">에러가 발생했습니다.</p>
+          </div>
+        ) : posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-gray-500">
             <svg className="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <p>게시글이 없습니다.</p>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   )
