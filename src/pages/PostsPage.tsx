@@ -341,7 +341,8 @@ export function PostsPage() {
     }
   }
 
-  const { columnSizing, setColumnSizing } = useTableStore()
+  const columnSizing = useTableStore((state) => state.columnSizing)
+  const setColumnSizing = useTableStore((state) => state.setColumnSizing)
   const { openModal, closeModal } = useModalStore()
   const queryClient = useQueryClient()
 
@@ -357,18 +358,21 @@ export function PostsPage() {
     if (Object.keys(columnSizing).length === 0) {
       const initialSizing: Record<string, number> = {}
       columns.forEach((col) => {
-        const id = col.accessorKey as string
-        if (col.minSize) {
+        const id = (col.id || col.accessorKey) as string
+        if (id && col.minSize) {
           initialSizing[id] = col.minSize
         }
       })
-      setColumnSizing(() => initialSizing)
+      if (Object.keys(initialSizing).length > 0) {
+        setColumnSizing(initialSizing)
+      }
     }
   }, [])
 
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ['posts', params],
     queryFn: () => postsApi.getAll(params),
+    placeholderData: (previousData) => previousData,
   })
 
   const posts = data?.data.items ?? []
