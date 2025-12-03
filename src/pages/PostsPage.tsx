@@ -205,13 +205,13 @@ export const PostsPage = () => {
         </Button>
       </div>
 
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex flex-wrap items-center gap-3 mb-4">
         <SearchInput
           value={searchTerm}
           onChange={setSearchTerm}
           placeholder="제목, 내용 검색..."
           isLoading={isFetching}
-          className="w-80"
+          className="w-full sm:w-64 lg:w-80"
         />
 
         <select
@@ -220,7 +220,7 @@ export const PostsPage = () => {
             const value = e.target.value
             setCategoryFilter(value === '' ? undefined : value as Category)
           }}
-          className="px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+          className="flex-1 sm:flex-none px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
         >
           <option value="">전체 카테고리</option>
           {categories.map((category) => (
@@ -232,8 +232,12 @@ export const PostsPage = () => {
           <Button
             variant="secondary"
             onClick={() => setShowColumnMenu(!showColumnMenu)}
+            className="!px-3 sm:!px-4"
           >
-            컬럼 항목 설정
+            <svg className="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+            <span className="hidden sm:inline">컬럼 항목 설정</span>
           </Button>
           {showColumnMenu && (
             <div className="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-10 min-w-40">

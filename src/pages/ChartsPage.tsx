@@ -165,7 +165,7 @@ export const ChartsPage = () => {
                     error={coffeeBrands.error}
                     onSettingsClick={() => setActiveModal('coffee-brands')}
                 >
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="h-64">
                             {coffeeBrands.data && (
                                 <BarChart
@@ -196,7 +196,7 @@ export const ChartsPage = () => {
                     error={snackBrands.error}
                     onSettingsClick={() => setActiveModal('snack-brands')}
                 >
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="h-64">
                             {snackBrands.data && (
                                 <BarChart
@@ -230,7 +230,7 @@ export const ChartsPage = () => {
                     error={moodTrend.error}
                     onSettingsClick={() => setActiveModal('mood-trend')}
                 >
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="h-64">
                             {moodTrend.data && (
                                 <StackedBarChart
@@ -263,7 +263,7 @@ export const ChartsPage = () => {
                     error={workoutTrend.error}
                     onSettingsClick={() => setActiveModal('workout-trend')}
                 >
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="h-64">
                             {workoutTrend.data && (
                                 <StackedBarChart

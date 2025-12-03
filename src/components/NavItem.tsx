@@ -4,12 +4,14 @@ import type { ReactNode } from 'react'
 interface NavItemProps {
   to: string
   children: ReactNode
+  onClick?: () => void
 }
 
-export const NavItem = ({ to, children }: NavItemProps) => {
+export const NavItem = ({ to, children, onClick }: NavItemProps) => {
   return (
     <NavLink
       to={to}
+      onClick={onClick}
       className={({ isActive }) =>
         `block px-4 py-2 rounded transition ${
           isActive

@@ -9,7 +9,7 @@ export const ChartSection = ({ title, children }: ChartSectionProps) => {
   return (
     <section>
       <h2 className="text-xl font-bold text-white mb-4">{title}</h2>
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {children}
       </div>
     </section>
