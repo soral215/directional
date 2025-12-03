@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores'
 import { healthApi } from '../api'
 import { Button } from './Button'
 import { NavItem } from './NavItem'
+import { DevTools } from './DevTools'
 
 const menuItems = [
   { to: '/posts', label: '게시판' },
@@ -83,6 +84,7 @@ export const Layout = () => {
           <Outlet />
         </main>
       </div>
+      {import.meta.env.DEV && <DevTools />}
     </div>
   )
 }

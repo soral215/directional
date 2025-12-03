@@ -5,6 +5,10 @@ export { chartsApi } from './charts'
 export const healthApi = {
   check: () => import('./client').then(({ http }) => http.get('/health')),
 }
+
+export const devApi = {
+  deleteAllMyPosts: () => import('./client').then(({ http }) => http.delete('/posts')),
+}
 export type {
   Post,
   PostsResponse,
