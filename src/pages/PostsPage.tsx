@@ -8,7 +8,7 @@ import {
   createColumnHelper,
 } from '@tanstack/react-table'
 import { postsApi } from '../api'
-import type { Post, Category, UpdatePostRequest, PostsParams } from '../api'
+import type { Post, Category, CreatePostRequest, PostsParams } from '../api'
 import { useTableStore, useModalStore } from '../stores'
 import { Chip, Button, SearchInput } from '../components'
 import { useDebounce } from '../hooks'
@@ -135,23 +135,26 @@ function PostDetailContent({ post, onEdit, onDelete }: PostDetailContentProps) {
   )
 }
 
-interface PostEditFormProps {
-  post: Post
+interface PostFormProps {
+  post?: Post
   onSuccess: () => void
   onCancel: () => void
 }
 
-function PostEditForm({ post, onSuccess, onCancel }: PostEditFormProps) {
+function PostForm({ post, onSuccess, onCancel }: PostFormProps) {
+  const isEdit = !!post
   const queryClient = useQueryClient()
+
   const [formData, setFormData] = useState({
-    title: post.title,
-    body: post.body,
-    category: post.category,
-    tags: post.tags.join(', '),
+    title: post?.title ?? '',
+    body: post?.body ?? '',
+    category: post?.category ?? ('FREE' as Category),
+    tags: post?.tags.join(', ') ?? '',
   })
 
-  const updateMutation = useMutation({
-    mutationFn: (data: UpdatePostRequest) => postsApi.update(post.id, data),
+  const mutation = useMutation({
+    mutationFn: (data: CreatePostRequest) =>
+      isEdit ? postsApi.update(post.id, data) : postsApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] })
       onSuccess()
@@ -165,7 +168,7 @@ function PostEditForm({ post, onSuccess, onCancel }: PostEditFormProps) {
       .map((tag) => tag.trim())
       .filter((tag) => tag.length > 0)
 
-    updateMutation.mutate({
+    mutation.mutate({
       title: formData.title,
       body: formData.body,
       category: formData.category,
@@ -221,6 +224,7 @@ function PostEditForm({ post, onSuccess, onCancel }: PostEditFormProps) {
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           required
+          placeholder="제목을 입력하세요"
           className="w-full px-3 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
@@ -234,6 +238,7 @@ function PostEditForm({ post, onSuccess, onCancel }: PostEditFormProps) {
           onChange={(e) => setFormData({ ...formData, body: e.target.value })}
           required
           rows={6}
+          placeholder="내용을 입력하세요"
           className="w-full px-3 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
         />
       </div>
@@ -249,16 +254,18 @@ function PostEditForm({ post, onSuccess, onCancel }: PostEditFormProps) {
         />
       </div>
 
-      {updateMutation.isError && (
-        <p className="text-red-400 text-sm">수정 중 오류가 발생했습니다.</p>
+      {mutation.isError && (
+        <p className="text-red-400 text-sm">
+          {isEdit ? '수정' : '등록'} 중 오류가 발생했습니다.
+        </p>
       )}
 
       <div className="flex justify-end gap-3 pt-4 border-t border-gray-700">
         <Button type="button" variant="secondary" onClick={onCancel}>
           취소
         </Button>
-        <Button type="submit" variant="primary" isLoading={updateMutation.isPending}>
-          저장
+        <Button type="submit" variant="primary" isLoading={mutation.isPending}>
+          {isEdit ? '저장' : '등록'}
         </Button>
       </div>
     </form>
@@ -377,11 +384,23 @@ export function PostsPage() {
     onColumnSizingChange: setColumnSizing,
   })
 
+  const handleCreate = () => {
+    openModal({
+      title: '새 글 작성',
+      content: (
+        <PostForm
+          onSuccess={closeModal}
+          onCancel={closeModal}
+        />
+      ),
+    })
+  }
+
   const handleEdit = (post: Post) => {
     openModal({
       title: '게시글 수정',
       content: (
-        <PostEditForm
+        <PostForm
           post={post}
           onSuccess={closeModal}
           onCancel={closeModal}
@@ -419,7 +438,12 @@ export function PostsPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-white mb-6">게시판</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-white">게시판</h2>
+        <Button onClick={handleCreate}>
+          + 새 글 작성
+        </Button>
+      </div>
 
       <div className="flex items-center gap-4 mb-4">
         <SearchInput
