@@ -302,16 +302,37 @@ function DeleteConfirmContent({ postTitle, onConfirm, onCancel, isLoading }: Del
   )
 }
 
+type SortField = 'title' | 'createdAt'
+type SortOrder = 'asc' | 'desc'
+
 export function PostsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<Category | undefined>(undefined)
+  const [sortField, setSortField] = useState<SortField | undefined>(undefined)
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
   const debouncedSearch = useDebounce(searchTerm, 300)
 
   const params = useMemo<PostsParams>(() => ({
     limit: 10,
     search: debouncedSearch || undefined,
     category: categoryFilter || undefined,
-  }), [debouncedSearch, categoryFilter])
+    sort: sortField,
+    order: sortField ? sortOrder : undefined,
+  }), [debouncedSearch, categoryFilter, sortField, sortOrder])
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      if (sortOrder === 'desc') {
+        setSortOrder('asc')
+      } else {
+        setSortField(undefined)
+        setSortOrder('desc')
+      }
+    } else {
+      setSortField(field)
+      setSortOrder('desc')
+    }
+  }
 
   const { columnSizing, setColumnSizing } = useTableStore()
   const { openModal, closeModal } = useModalStore()
@@ -431,19 +452,38 @@ export function PostsPage() {
               <tr key={headerGroup.id} className="border-b border-gray-700">
                 {headerGroup.headers.map((header, index) => {
                   const isLastColumn = index === headerGroup.headers.length - 1
+                  const columnId = header.column.id
+                  const isSortable = columnId === 'title' || columnId === 'createdAt'
+                  const isCurrentSort = sortField === columnId
+
                   return (
                     <th
                       key={header.id}
-                      className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider relative"
+                      className={`text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider relative ${
+                        isSortable ? 'cursor-pointer hover:text-gray-200 select-none' : ''
+                      }`}
                       style={{ width: header.getSize() }}
+                      onClick={isSortable ? () => handleSort(columnId as SortField) : undefined}
                     >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
+                      <div className="flex items-center gap-1">
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                        {isSortable && (
+                          <span className="ml-1">
+                            {isCurrentSort ? (
+                              sortOrder === 'desc' ? '▼' : '▲'
+                            ) : (
+                              <span className="text-gray-600">⇅</span>
+                            )}
+                          </span>
+                        )}
+                      </div>
                       {header.column.getCanResize() && !isLastColumn && (
                         <div
                           onMouseDown={header.getResizeHandler()}
                           onTouchStart={header.getResizeHandler()}
+                          onClick={(e) => e.stopPropagation()}
                           className={`absolute top-0 right-0 w-1 h-full cursor-col-resize select-none touch-none transition-colors ${
                             header.column.getIsResizing()
                               ? 'bg-blue-500'
