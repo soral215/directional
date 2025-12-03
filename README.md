@@ -1,73 +1,95 @@
-# React + TypeScript + Vite
+# Directional 프론트엔드 과제
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 기반 웹 애플리케이션으로, 게시판 CRUD 기능과 데이터 시각화 기능을 구현한 프로젝트입니다.
 
-Currently, two official plugins are available:
+## 실행 방법
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+# 의존성 설치
+npm install
 
-## React Compiler
+# 개발 서버 실행
+npm run dev
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# 빌드
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 기술 스택
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| 분류 | 기술 |
+|------|------|
+| Framework | React 19, TypeScript |
+| Build Tool | Vite |
+| Styling | Tailwind CSS : 빠른 구현과 관리를 위해 선택 |
+| State Management | Zustand (persist middleware) : 기본적인 전역 기능 및 로컬 저장소의 용이한 사용 때문에 선택 |
+| Server State | TanStack Query : api 통신 캐시 기능 및 무한 스크롤 관련 편의 기능으로 인해 선택 |
+| Table | TanStack Table : 필수 요건 기능들을 아우를 수 있어서 선택 |
+| Chart | Recharts : 비교적 보편화되었고, 문서가 자세하여 선택 |
+| HTTP Client | Axios |
+| Routing | React Router |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 주요 구현 기능
+
+### 1. 게시판
+
+- 게시글 작성 / 조회 / 수정 / 삭제 (CRUD)
+- 테이블 형태의 게시글 목록
+- 컬럼별 너비 조절 (드래그)
+- 컬럼 숨김/보임 설정
+- 무한 스크롤 페이지네이션
+- 제목/본문 검색
+- 정렬 (제목, 생성일 기준 오름/내림차순)
+- 카테고리 필터링 (공지, QnA, 자유)
+- 금칙어 필터 (캄보디아, 프놈펜, 불법체류, 텔레그램)
+
+### 2. 데이터 시각화
+
+**바 차트 / 도넛 차트**
+- 인기 커피 브랜드
+- 인기 스낵 브랜드
+
+**스택형 바 차트 / 스택형 면적 차트**
+- 주간 기분 트렌드 (행복, 피곤, 스트레스)
+- 주간 운동 트렌드 (러닝, 사이클, 스트레칭)
+
+**멀티라인 차트**
+- 커피 섭취량 vs 생산성 (팀별)
+- 스낵 섭취 vs 사기 (부서별)
+- 듀얼 Y축, 실선/점선 구분, 원형/사각형 마커
+
+**공통 기능**
+- 범례 표시
+- 항목별 색상 변경 (프리셋 + 커스텀)
+- 항목별 데이터 숨김/보임
+- 설정값 localStorage 저장
+
+## 추가 구현 사항
+
+| 기능 | 설명 |
+|------|------|
+| 차트 설정 모달 | 범례 대신 별도의 설정 모달 UI로 색상/숨김 관리 |
+| 커스텀 색상 선택 | 프리셋 10색 외에 color picker로 직접 색상 선택 |
+| 설정값 영속성 | 차트 설정(색상, 숨김)을 localStorage에 저장 |
+| 테이블 설정 영속성 | 컬럼 너비, 숨김 상태를 localStorage에 저장 |
+| 다크 테마 | 전체 UI를 다크 테마로 구현 |
+| 로딩/에러 상태 | 차트 카드에 로딩 스피너 및 에러 메시지 표시 |
+| 인증 토큰 영속성 | 로그인 토큰을 localStorage에 저장하여 세션 유지 |
+| 반응형 레이아웃 | 모바일/태블릿/데스크탑 대응 (사이드바, 차트 그리드, 필터 영역) |
+| 서버 상태 표시 | 헤더에 서버 연결 상태 인디케이터 (녹색/노란색/빨간색) |
+| DevTools | 개발 환경 전용 도구 (랜덤 포스트 생성, 전체 삭제) |
+
+## 프로젝트 구조
+
+```
+src/
+├── api/          # API 호출 함수
+├── components/   # 재사용 컴포넌트
+│   ├── charts/   # 차트 컴포넌트
+│   └── posts/    # 게시글 관련 컴포넌트
+├── constants/    # 상수 정의
+├── hooks/        # 커스텀 훅
+├── pages/        # 페이지 컴포넌트
+├── stores/       # Zustand 스토어
+└── router.tsx    # 라우팅 설정
 ```
