@@ -1,5 +1,6 @@
 export { Button } from './Button'
 export { Input } from './Input'
 export { Layout } from './Layout'
+export { Modal } from './Modal'
 export { NavItem } from './NavItem'
 export { PrivateRoute } from './PrivateRoute'
