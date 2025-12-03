@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { chartsApi } from '../api'
-import { ChartSection, ChartCard, BarChart, DonutChart, StackedBarChart, StackedAreaChart } from '../components/charts'
+import { ChartSection, ChartCard, BarChart, DonutChart, StackedBarChart, StackedAreaChart, MultiLineChart } from '../components/charts'
 
 export const ChartsPage = () => {
     const coffeeBrands = useQuery({
@@ -145,6 +145,55 @@ export const ChartsPage = () => {
                                 />
                             )}
                         </div>
+                    </div>
+                </ChartCard>
+            </ChartSection>
+
+            <ChartSection title="생산성 분석">
+                <ChartCard
+                    title="커피 섭취량 vs 생산성"
+                    isLoading={coffeeConsumption.isLoading}
+                    error={coffeeConsumption.error}
+                >
+                    <div className="h-80">
+                        {coffeeConsumption.data && (
+                            <MultiLineChart
+                                series={coffeeConsumption.data.data.teams.map((team) => ({
+                                    name: team.team,
+                                    data: team.series.map((s) => ({
+                                        x: s.cups,
+                                        primary: s.bugs,
+                                        secondary: s.productivity,
+                                    })),
+                                }))}
+                                xLabel="커피 (잔/일)"
+                                primaryLabel="버그 수"
+                                secondaryLabel="생산성"
+                            />
+                        )}
+                    </div>
+                </ChartCard>
+                <ChartCard
+                    title="스낵 섭취 vs 사기"
+                    isLoading={snackImpact.isLoading}
+                    error={snackImpact.error}
+                >
+                    <div className="h-80">
+                        {snackImpact.data && (
+                            <MultiLineChart
+                                series={snackImpact.data.data.departments.map((dept) => ({
+                                    name: dept.name,
+                                    data: dept.metrics.map((m) => ({
+                                        x: m.snacks,
+                                        primary: m.meetingsMissed,
+                                        secondary: m.morale,
+                                    })),
+                                }))}
+                                xLabel="스낵 (개)"
+                                primaryLabel="회의 불참"
+                                secondaryLabel="사기"
+                            />
+                        )}
                     </div>
                 </ChartCard>
             </ChartSection>

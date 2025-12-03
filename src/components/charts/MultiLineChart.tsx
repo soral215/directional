@@ -1,0 +1,197 @@
+import { useState } from 'react'
+import {
+  ComposedChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts'
+
+const COLORS = ['#3b82f6', '#22c55e', '#eab308', '#ef4444', '#8b5cf6']
+
+interface SeriesData {
+  name: string
+  data: {
+    x: number
+    primary: number
+    secondary: number
+  }[]
+}
+
+interface MultiLineChartProps {
+  series: SeriesData[]
+  xLabel: string
+  primaryLabel: string
+  secondaryLabel: string
+}
+
+export const MultiLineChart = ({
+  series,
+  xLabel,
+  primaryLabel,
+  secondaryLabel,
+}: MultiLineChartProps) => {
+  const [hiddenSeries, setHiddenSeries] = useState<Set<string>>(new Set())
+  const [hoveredSeries, setHoveredSeries] = useState<string | null>(null)
+
+  const allXValues = [...new Set(series.flatMap((s) => s.data.map((d) => d.x)))].sort((a, b) => a - b)
+
+  const chartData = allXValues.map((x) => {
+    const point: Record<string, number> = { x }
+    series.forEach((s) => {
+      const dataPoint = s.data.find((d) => d.x === x)
+      if (dataPoint) {
+        point[`${s.name}_primary`] = dataPoint.primary
+        point[`${s.name}_secondary`] = dataPoint.secondary
+      }
+    })
+    return point
+  })
+
+  const toggleSeries = (name: string) => {
+    setHiddenSeries((prev) => {
+      const next = new Set(prev)
+      if (next.has(name)) {
+        next.delete(name)
+      } else {
+        next.add(name)
+      }
+      return next
+    })
+  }
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload || !hoveredSeries) return null
+
+    const relevantData = payload.filter((p: any) => p.dataKey.startsWith(hoveredSeries))
+    if (relevantData.length === 0) return null
+
+    const primaryData = relevantData.find((p: any) => p.dataKey.endsWith('_primary'))
+    const secondaryData = relevantData.find((p: any) => p.dataKey.endsWith('_secondary'))
+
+    return (
+      <div className="bg-gray-800 border border-gray-700 rounded-lg p-3">
+        <p className="text-white font-medium mb-2">{hoveredSeries}</p>
+        <p className="text-gray-400 text-sm">{xLabel}: {label}</p>
+        {primaryData && (
+          <p className="text-gray-300 text-sm">{primaryLabel}: {primaryData.value}</p>
+        )}
+        {secondaryData && (
+          <p className="text-gray-300 text-sm">{secondaryLabel}: {secondaryData.value}</p>
+        )}
+      </div>
+    )
+  }
+
+  const renderLegend = () => (
+    <div className="flex flex-wrap justify-center gap-4 mt-2">
+      {series.map((s, index) => {
+        const color = COLORS[index % COLORS.length]
+        const isHidden = hiddenSeries.has(s.name)
+        return (
+          <button
+            key={s.name}
+            onClick={() => toggleSeries(s.name)}
+            className={`flex items-center gap-2 px-2 py-1 rounded transition-opacity ${
+              isHidden ? 'opacity-40' : ''
+            }`}
+          >
+            <span
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: color }}
+            />
+            <span className="text-gray-400 text-sm">{s.name}</span>
+          </button>
+        )
+      })}
+      <div className="flex items-center gap-4 ml-4 border-l border-gray-700 pl-4">
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-0.5 bg-gray-400" />
+          <span className="text-gray-500 text-xs">{primaryLabel}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-0.5 bg-gray-400 border-dashed border-t-2 border-gray-400" style={{ borderStyle: 'dashed' }} />
+          <span className="text-gray-500 text-xs">{secondaryLabel}</span>
+        </div>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="flex-1">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart
+            data={chartData}
+            margin={{ top: 10, right: 50, left: 0, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <XAxis
+              dataKey="x"
+              stroke="#9ca3af"
+              fontSize={12}
+              label={{ value: xLabel, position: 'bottom', fill: '#9ca3af', fontSize: 11 }}
+            />
+            <YAxis
+              yAxisId="left"
+              stroke="#9ca3af"
+              fontSize={12}
+              label={{ value: primaryLabel, angle: -90, position: 'insideLeft', fill: '#9ca3af', fontSize: 11 }}
+            />
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              stroke="#9ca3af"
+              fontSize={12}
+              label={{ value: secondaryLabel, angle: 90, position: 'insideRight', fill: '#9ca3af', fontSize: 11 }}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            {series.map((s, index) => {
+              const color = COLORS[index % COLORS.length]
+              const isHidden = hiddenSeries.has(s.name)
+              if (isHidden) return null
+              return (
+                <Line
+                  key={`${s.name}_primary`}
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey={`${s.name}_primary`}
+                  stroke={color}
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: color }}
+                  activeDot={{ r: 6 }}
+                  onMouseEnter={() => setHoveredSeries(s.name)}
+                  onMouseLeave={() => setHoveredSeries(null)}
+                />
+              )
+            })}
+            {series.map((s, index) => {
+              const color = COLORS[index % COLORS.length]
+              const isHidden = hiddenSeries.has(s.name)
+              if (isHidden) return null
+              return (
+                <Line
+                  key={`${s.name}_secondary`}
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey={`${s.name}_secondary`}
+                  stroke={color}
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  dot={{ r: 4, fill: color, strokeWidth: 0 }}
+                  activeDot={{ r: 6 }}
+                  onMouseEnter={() => setHoveredSeries(s.name)}
+                  onMouseLeave={() => setHoveredSeries(null)}
+                />
+              )
+            })}
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+      {renderLegend()}
+    </div>
+  )
+}
+
