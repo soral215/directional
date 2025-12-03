@@ -9,23 +9,36 @@ import {
   Cell,
 } from 'recharts'
 
-const COLORS = ['#3b82f6', '#22c55e', '#eab308', '#ef4444', '#8b5cf6']
+const DEFAULT_COLORS = ['#3b82f6', '#22c55e', '#eab308', '#ef4444', '#8b5cf6']
 
 interface BarChartProps<T> {
   data: T[]
   dataKey: keyof T & string
   nameKey: keyof T & string
+  colors?: Record<string, string>
+  hiddenKeys?: Set<string>
 }
 
 export const BarChart = <T,>({
   data,
   dataKey,
   nameKey,
+  colors,
+  hiddenKeys,
 }: BarChartProps<T>) => {
+  const filteredData = hiddenKeys
+    ? data.filter((item) => !hiddenKeys.has(String((item as Record<string, unknown>)[nameKey])))
+    : data
+
+  const getColor = (item: T, index: number) => {
+    const key = String((item as Record<string, unknown>)[nameKey])
+    return colors?.[key] || DEFAULT_COLORS[index % DEFAULT_COLORS.length]
+  }
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <RechartsBarChart
-        data={data}
+        data={filteredData}
         layout="vertical"
         margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
       >
@@ -48,12 +61,11 @@ export const BarChart = <T,>({
           itemStyle={{ color: '#9ca3af' }}
         />
         <Bar dataKey={dataKey as string} radius={[0, 4, 4, 0]}>
-          {data.map((_, index) => (
-            <Cell key={index} fill={COLORS[index % COLORS.length]} />
+          {filteredData.map((item, index) => (
+            <Cell key={index} fill={getColor(item, index)} />
           ))}
         </Bar>
       </RechartsBarChart>
     </ResponsiveContainer>
   )
 }
-

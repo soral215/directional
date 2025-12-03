@@ -1,6 +1,20 @@
+import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { chartsApi } from '../api'
-import { ChartSection, ChartCard, BarChart, DonutChart, StackedBarChart, StackedAreaChart, MultiLineChart } from '../components/charts'
+import { useChartSettingsStore } from '../stores'
+import type { ChartItemConfig } from '../stores'
+import {
+    ChartSection,
+    ChartCard,
+    BarChart,
+    DonutChart,
+    StackedBarChart,
+    StackedAreaChart,
+    MultiLineChart,
+    ChartSettingsModal,
+} from '../components/charts'
+
+const DEFAULT_COLORS = ['#3b82f6', '#22c55e', '#eab308', '#ef4444', '#8b5cf6']
 
 export const ChartsPage = () => {
     const coffeeBrands = useQuery({
@@ -33,6 +47,56 @@ export const ChartsPage = () => {
         queryFn: () => chartsApi.getSnackImpact(),
     })
 
+    const { settings, setSettings } = useChartSettingsStore()
+
+    const [activeModal, setActiveModal] = useState<string | null>(null)
+
+    const getDefaultConfig = (
+        data: { key: string; label: string }[]
+    ): ChartItemConfig[] => {
+        return data.map((item, index) => ({
+            key: item.key,
+            label: item.label,
+            color: DEFAULT_COLORS[index % DEFAULT_COLORS.length],
+            visible: true,
+        }))
+    }
+
+    const coffeeBrandsConfig = useMemo(() => {
+        const saved = settings['coffee-brands']
+        if (saved) return saved
+        if (!coffeeBrands.data) return []
+        return getDefaultConfig(
+            coffeeBrands.data.data.map((item) => ({ key: item.brand, label: item.brand }))
+        )
+    }, [coffeeBrands.data, settings])
+
+    const snackBrandsConfig = useMemo(() => {
+        const saved = settings['snack-brands']
+        if (saved) return saved
+        if (!snackBrands.data) return []
+        return getDefaultConfig(
+            snackBrands.data.data.map((item) => ({ key: item.name, label: item.name }))
+        )
+    }, [snackBrands.data, settings])
+
+    const configToColors = (config: ChartItemConfig[]) => {
+        const colors: Record<string, string> = {}
+        config.forEach((item) => {
+            colors[item.key] = item.color
+        })
+        return colors
+    }
+
+    const configToHidden = (config: ChartItemConfig[]) => {
+        return new Set(config.filter((item) => !item.visible).map((item) => item.key))
+    }
+
+    const coffeeBrandsColors = useMemo(() => configToColors(coffeeBrandsConfig), [coffeeBrandsConfig])
+    const coffeeBrandsHidden = useMemo(() => configToHidden(coffeeBrandsConfig), [coffeeBrandsConfig])
+    const snackBrandsColors = useMemo(() => configToColors(snackBrandsConfig), [snackBrandsConfig])
+    const snackBrandsHidden = useMemo(() => configToHidden(snackBrandsConfig), [snackBrandsConfig])
+
     return (
         <div className="space-y-10">
             <ChartSection title="브랜드 분석">
@@ -40,6 +104,7 @@ export const ChartsPage = () => {
                     title="인기 커피 브랜드"
                     isLoading={coffeeBrands.isLoading}
                     error={coffeeBrands.error}
+                    onSettingsClick={() => setActiveModal('coffee-brands')}
                 >
                     <div className="grid grid-cols-2 gap-4">
                         <div className="h-64">
@@ -48,6 +113,8 @@ export const ChartsPage = () => {
                                     data={coffeeBrands.data.data}
                                     dataKey="popularity"
                                     nameKey="brand"
+                                    colors={coffeeBrandsColors}
+                                    hiddenKeys={coffeeBrandsHidden}
                                 />
                             )}
                         </div>
@@ -57,6 +124,8 @@ export const ChartsPage = () => {
                                     data={coffeeBrands.data.data}
                                     dataKey="popularity"
                                     nameKey="brand"
+                                    colors={coffeeBrandsColors}
+                                    hiddenKeys={coffeeBrandsHidden}
                                 />
                             )}
                         </div>
@@ -66,6 +135,7 @@ export const ChartsPage = () => {
                     title="인기 스낵 브랜드"
                     isLoading={snackBrands.isLoading}
                     error={snackBrands.error}
+                    onSettingsClick={() => setActiveModal('snack-brands')}
                 >
                     <div className="grid grid-cols-2 gap-4">
                         <div className="h-64">
@@ -74,6 +144,8 @@ export const ChartsPage = () => {
                                     data={snackBrands.data.data}
                                     dataKey="share"
                                     nameKey="name"
+                                    colors={snackBrandsColors}
+                                    hiddenKeys={snackBrandsHidden}
                                 />
                             )}
                         </div>
@@ -83,6 +155,8 @@ export const ChartsPage = () => {
                                     data={snackBrands.data.data}
                                     dataKey="share"
                                     nameKey="name"
+                                    colors={snackBrandsColors}
+                                    hiddenKeys={snackBrandsHidden}
                                 />
                             )}
                         </div>
@@ -197,6 +271,20 @@ export const ChartsPage = () => {
                     </div>
                 </ChartCard>
             </ChartSection>
+
+            <ChartSettingsModal
+                isOpen={activeModal === 'coffee-brands'}
+                onClose={() => setActiveModal(null)}
+                items={coffeeBrandsConfig}
+                onApply={(items) => setSettings('coffee-brands', items)}
+            />
+
+            <ChartSettingsModal
+                isOpen={activeModal === 'snack-brands'}
+                onClose={() => setActiveModal(null)}
+                items={snackBrandsConfig}
+                onApply={(items) => setSettings('snack-brands', items)}
+            />
         </div>
     )
 }

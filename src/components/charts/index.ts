@@ -4,4 +4,5 @@ export { DonutChart } from './DonutChart'
 export { StackedBarChart } from './StackedBarChart'
 export { StackedAreaChart } from './StackedAreaChart'
 export { MultiLineChart } from './MultiLineChart'
+export { ChartSettingsModal } from './ChartSettingsModal'
 

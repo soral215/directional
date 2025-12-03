@@ -1,3 +1,5 @@
 export { useAuthStore } from './authStore'
 export { useModalStore } from './modalStore'
 export { useTableStore } from './tableStore'
+export { useChartSettingsStore } from './chartSettingsStore'
+export type { ChartItemConfig } from './chartSettingsStore'
