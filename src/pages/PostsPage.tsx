@@ -8,8 +8,8 @@ import {
 } from '@tanstack/react-table'
 import { postsApi } from '../api'
 import type { Post, PostsParams, Category } from '../api'
-import { useTableStore } from '../stores'
-import { Chip } from '../components'
+import { useTableStore, useModalStore } from '../stores'
+import { Chip, Button } from '../components'
 
 const categoryVariant: Record<Category, 'red' | 'yellow' | 'green'> = {
   NOTICE: 'red',
@@ -73,9 +73,70 @@ const columns = [
   }),
 ]
 
+interface PostDetailContentProps {
+  post: Post
+  onEdit: () => void
+  onDelete: () => void
+}
+
+function PostDetailContent({ post, onEdit, onDelete }: PostDetailContentProps) {
+  return (
+    <div className="space-y-4">
+      <table className="w-full text-sm">
+        <tbody className="divide-y divide-gray-700">
+          <tr>
+            <td className="py-3 px-4 text-gray-400 w-24 bg-gray-900/50">카테고리</td>
+            <td className="py-3 px-4 text-white">
+              <Chip variant={categoryVariant[post.category]}>{post.category}</Chip>
+            </td>
+            <td className="py-3 px-4 text-gray-400 w-24 bg-gray-900/50">작성일</td>
+            <td className="py-3 px-4 text-white">
+              {new Date(post.createdAt).toLocaleString('ko-KR')}
+            </td>
+          </tr>
+          <tr>
+            <td className="py-3 px-4 text-gray-400 bg-gray-900/50">제목</td>
+            <td className="py-3 px-4 text-white font-medium" colSpan={3}>
+              {post.title}
+            </td>
+          </tr>
+          {post.tags.length > 0 && (
+            <tr>
+              <td className="py-3 px-4 text-gray-400 bg-gray-900/50">태그</td>
+              <td className="py-3 px-4" colSpan={3}>
+                <div className="flex gap-2 flex-wrap">
+                  {post.tags.map((tag) => (
+                    <Chip key={tag} variant="blue">#{tag}</Chip>
+                  ))}
+                </div>
+              </td>
+            </tr>
+          )}
+          <tr>
+            <td className="py-3 px-4 text-gray-400 bg-gray-900/50 align-top">내용</td>
+            <td className="py-3 px-4 text-gray-300" colSpan={3}>
+              <p className="whitespace-pre-wrap min-h-[100px]">{post.body}</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div className="flex justify-center gap-3 pt-2">
+        <Button variant="primary" onClick={onEdit}>
+          수정
+        </Button>
+        <Button variant="danger" onClick={onDelete}>
+          삭제
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 export function PostsPage() {
   const [params] = useState<PostsParams>({ limit: 10 })
   const { columnSizing, setColumnSizing } = useTableStore()
+  const { openModal, closeModal } = useModalStore()
 
   useEffect(() => {
     if (Object.keys(columnSizing).length === 0) {
@@ -107,6 +168,29 @@ export function PostsPage() {
     },
     onColumnSizingChange: setColumnSizing,
   })
+
+  const handleEdit = (post: Post) => {
+    closeModal()
+    console.log('수정:', post.id)
+  }
+
+  const handleDelete = (post: Post) => {
+    closeModal()
+    console.log('삭제:', post.id)
+  }
+
+  const handleRowClick = (post: Post) => {
+    openModal({
+      title: '게시글 상세',
+      content: (
+        <PostDetailContent
+          post={post}
+          onEdit={() => handleEdit(post)}
+          onDelete={() => handleDelete(post)}
+        />
+      ),
+    })
+  }
 
   if (isLoading) {
     return (
@@ -165,6 +249,7 @@ export function PostsPage() {
             {table.getRowModel().rows.map((row, index) => (
               <tr
                 key={row.id}
+                onClick={() => handleRowClick(row.original)}
                 className={`
                   border-b border-gray-700/30 transition-colors cursor-pointer
                   ${index % 2 === 1 ? 'bg-gray-900/20' : ''}
