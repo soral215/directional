@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
-const COLORS = ['#3b82f6', '#22c55e', '#eab308', '#ef4444', '#8b5cf6']
+const DEFAULT_COLORS = ['#3b82f6', '#22c55e', '#eab308', '#ef4444', '#8b5cf6']
 
 interface SeriesData {
   name: string
@@ -25,6 +25,8 @@ interface MultiLineChartProps {
   xLabel: string
   primaryLabel: string
   secondaryLabel: string
+  colors?: Record<string, string>
+  hiddenKeys?: Set<string>
 }
 
 export const MultiLineChart = ({
@@ -32,9 +34,13 @@ export const MultiLineChart = ({
   xLabel,
   primaryLabel,
   secondaryLabel,
+  colors = {},
+  hiddenKeys = new Set(),
 }: MultiLineChartProps) => {
-  const [hiddenSeries, setHiddenSeries] = useState<Set<string>>(new Set())
+  const [localHidden, setLocalHidden] = useState<Set<string>>(new Set())
   const [hoveredSeries, setHoveredSeries] = useState<string | null>(null)
+
+  const effectiveHidden = hiddenKeys.size > 0 ? hiddenKeys : localHidden
 
   const allXValues = [...new Set(series.flatMap((s) => s.data.map((d) => d.x)))].sort((a, b) => a - b)
 
@@ -51,7 +57,8 @@ export const MultiLineChart = ({
   })
 
   const toggleSeries = (name: string) => {
-    setHiddenSeries((prev) => {
+    if (hiddenKeys.size > 0) return
+    setLocalHidden((prev) => {
       const next = new Set(prev)
       if (next.has(name)) {
         next.delete(name)
@@ -62,14 +69,19 @@ export const MultiLineChart = ({
     })
   }
 
+  const getColor = (name: string, index: number) => {
+    return colors[name] || DEFAULT_COLORS[index % DEFAULT_COLORS.length]
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !hoveredSeries) return null
 
-    const relevantData = payload.filter((p: any) => p.dataKey.startsWith(hoveredSeries))
+    const relevantData = payload.filter((p: { dataKey: string }) => p.dataKey.startsWith(hoveredSeries))
     if (relevantData.length === 0) return null
 
-    const primaryData = relevantData.find((p: any) => p.dataKey.endsWith('_primary'))
-    const secondaryData = relevantData.find((p: any) => p.dataKey.endsWith('_secondary'))
+    const primaryData = relevantData.find((p: { dataKey: string }) => p.dataKey.endsWith('_primary'))
+    const secondaryData = relevantData.find((p: { dataKey: string }) => p.dataKey.endsWith('_secondary'))
 
     return (
       <div className="bg-gray-800 border border-gray-700 rounded-lg p-3">
@@ -88,13 +100,13 @@ export const MultiLineChart = ({
   const renderLegend = () => (
     <div className="flex flex-wrap justify-center gap-4 mt-2">
       {series.map((s, index) => {
-        const color = COLORS[index % COLORS.length]
-        const isHidden = hiddenSeries.has(s.name)
+        const color = getColor(s.name, index)
+        const isHidden = effectiveHidden.has(s.name)
         return (
           <button
             key={s.name}
             onClick={() => toggleSeries(s.name)}
-            className={`flex items-center gap-2 px-2 py-1 rounded transition-opacity ${
+            className={`flex items-center gap-2 px-2 py-1 rounded transition-opacity cursor-pointer ${
               isHidden ? 'opacity-40' : ''
             }`}
           >
@@ -149,8 +161,8 @@ export const MultiLineChart = ({
             />
             <Tooltip content={<CustomTooltip />} />
             {series.map((s, index) => {
-              const color = COLORS[index % COLORS.length]
-              const isHidden = hiddenSeries.has(s.name)
+              const color = getColor(s.name, index)
+              const isHidden = effectiveHidden.has(s.name)
               if (isHidden) return null
               return (
                 <Line
@@ -168,8 +180,8 @@ export const MultiLineChart = ({
               )
             })}
             {series.map((s, index) => {
-              const color = COLORS[index % COLORS.length]
-              const isHidden = hiddenSeries.has(s.name)
+              const color = getColor(s.name, index)
+              const isHidden = effectiveHidden.has(s.name)
               if (isHidden) return null
               return (
                 <Line
@@ -194,4 +206,3 @@ export const MultiLineChart = ({
     </div>
   )
 }
-

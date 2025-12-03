@@ -9,7 +9,7 @@ import {
   Legend,
 } from 'recharts'
 
-const COLORS = ['#3b82f6', '#22c55e', '#eab308', '#ef4444', '#8b5cf6']
+const DEFAULT_COLORS = ['#3b82f6', '#22c55e', '#eab308', '#ef4444', '#8b5cf6']
 
 interface StackedAreaChartProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -17,6 +17,8 @@ interface StackedAreaChartProps {
   xKey: string
   dataKeys: string[]
   labels?: Record<string, string>
+  colors?: Record<string, string>
+  hiddenKeys?: Set<string>
 }
 
 export const StackedAreaChart = ({
@@ -24,7 +26,11 @@ export const StackedAreaChart = ({
   xKey,
   dataKeys,
   labels = {},
+  colors = {},
+  hiddenKeys = new Set(),
 }: StackedAreaChartProps) => {
+  const visibleKeys = dataKeys.filter((key) => !hiddenKeys.has(key))
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
@@ -54,19 +60,21 @@ export const StackedAreaChart = ({
             <span style={{ color: '#9ca3af' }}>{labels[value] || value}</span>
           )}
         />
-        {dataKeys.map((key, index) => (
-          <Area
-            key={key}
-            type="monotone"
-            dataKey={key}
-            stackId="stack"
-            fill={COLORS[index % COLORS.length]}
-            stroke={COLORS[index % COLORS.length]}
-            fillOpacity={0.6}
-          />
-        ))}
+        {visibleKeys.map((key) => {
+          const color = colors[key] || DEFAULT_COLORS[dataKeys.indexOf(key) % DEFAULT_COLORS.length]
+          return (
+            <Area
+              key={key}
+              type="monotone"
+              dataKey={key}
+              stackId="stack"
+              fill={color}
+              stroke={color}
+              fillOpacity={0.6}
+            />
+          )
+        })}
       </AreaChart>
     </ResponsiveContainer>
   )
 }
-

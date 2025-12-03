@@ -9,7 +9,7 @@ import {
   Legend,
 } from 'recharts'
 
-const COLORS = ['#3b82f6', '#22c55e', '#eab308', '#ef4444', '#8b5cf6']
+const DEFAULT_COLORS = ['#3b82f6', '#22c55e', '#eab308', '#ef4444', '#8b5cf6']
 
 interface StackedBarChartProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -17,6 +17,8 @@ interface StackedBarChartProps {
   xKey: string
   dataKeys: string[]
   labels?: Record<string, string>
+  colors?: Record<string, string>
+  hiddenKeys?: Set<string>
 }
 
 export const StackedBarChart = ({
@@ -24,7 +26,11 @@ export const StackedBarChart = ({
   xKey,
   dataKeys,
   labels = {},
+  colors = {},
+  hiddenKeys = new Set(),
 }: StackedBarChartProps) => {
+  const visibleKeys = dataKeys.filter((key) => !hiddenKeys.has(key))
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
@@ -54,16 +60,15 @@ export const StackedBarChart = ({
             <span style={{ color: '#9ca3af' }}>{labels[value] || value}</span>
           )}
         />
-        {dataKeys.map((key, index) => (
+        {visibleKeys.map((key) => (
           <Bar
             key={key}
             dataKey={key}
             stackId="stack"
-            fill={COLORS[index % COLORS.length]}
+            fill={colors[key] || DEFAULT_COLORS[dataKeys.indexOf(key) % DEFAULT_COLORS.length]}
           />
         ))}
       </BarChart>
     </ResponsiveContainer>
   )
 }
-

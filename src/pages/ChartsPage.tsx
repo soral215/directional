@@ -48,7 +48,6 @@ export const ChartsPage = () => {
     })
 
     const { settings, setSettings } = useChartSettingsStore()
-
     const [activeModal, setActiveModal] = useState<string | null>(null)
 
     const getDefaultConfig = (
@@ -80,6 +79,44 @@ export const ChartsPage = () => {
         )
     }, [snackBrands.data, settings])
 
+    const moodTrendConfig = useMemo(() => {
+        const saved = settings['mood-trend']
+        if (saved) return saved
+        return getDefaultConfig([
+            { key: 'happy', label: '행복' },
+            { key: 'tired', label: '피곤' },
+            { key: 'stressed', label: '스트레스' },
+        ])
+    }, [settings])
+
+    const workoutTrendConfig = useMemo(() => {
+        const saved = settings['workout-trend']
+        if (saved) return saved
+        return getDefaultConfig([
+            { key: 'running', label: '러닝' },
+            { key: 'cycling', label: '사이클' },
+            { key: 'stretching', label: '스트레칭' },
+        ])
+    }, [settings])
+
+    const coffeeConsumptionConfig = useMemo(() => {
+        const saved = settings['coffee-consumption']
+        if (saved) return saved
+        if (!coffeeConsumption.data) return []
+        return getDefaultConfig(
+            coffeeConsumption.data.data.teams.map((team) => ({ key: team.team, label: team.team }))
+        )
+    }, [coffeeConsumption.data, settings])
+
+    const snackImpactConfig = useMemo(() => {
+        const saved = settings['snack-impact']
+        if (saved) return saved
+        if (!snackImpact.data) return []
+        return getDefaultConfig(
+            snackImpact.data.data.departments.map((dept) => ({ key: dept.name, label: dept.name }))
+        )
+    }, [snackImpact.data, settings])
+
     const configToColors = (config: ChartItemConfig[]) => {
         const colors: Record<string, string> = {}
         config.forEach((item) => {
@@ -92,10 +129,32 @@ export const ChartsPage = () => {
         return new Set(config.filter((item) => !item.visible).map((item) => item.key))
     }
 
+    const configToLabels = (config: ChartItemConfig[]) => {
+        const labels: Record<string, string> = {}
+        config.forEach((item) => {
+            labels[item.key] = item.label
+        })
+        return labels
+    }
+
     const coffeeBrandsColors = useMemo(() => configToColors(coffeeBrandsConfig), [coffeeBrandsConfig])
     const coffeeBrandsHidden = useMemo(() => configToHidden(coffeeBrandsConfig), [coffeeBrandsConfig])
     const snackBrandsColors = useMemo(() => configToColors(snackBrandsConfig), [snackBrandsConfig])
     const snackBrandsHidden = useMemo(() => configToHidden(snackBrandsConfig), [snackBrandsConfig])
+
+    const moodTrendColors = useMemo(() => configToColors(moodTrendConfig), [moodTrendConfig])
+    const moodTrendHidden = useMemo(() => configToHidden(moodTrendConfig), [moodTrendConfig])
+    const moodTrendLabels = useMemo(() => configToLabels(moodTrendConfig), [moodTrendConfig])
+
+    const workoutTrendColors = useMemo(() => configToColors(workoutTrendConfig), [workoutTrendConfig])
+    const workoutTrendHidden = useMemo(() => configToHidden(workoutTrendConfig), [workoutTrendConfig])
+    const workoutTrendLabels = useMemo(() => configToLabels(workoutTrendConfig), [workoutTrendConfig])
+
+    const coffeeConsumptionColors = useMemo(() => configToColors(coffeeConsumptionConfig), [coffeeConsumptionConfig])
+    const coffeeConsumptionHidden = useMemo(() => configToHidden(coffeeConsumptionConfig), [coffeeConsumptionConfig])
+
+    const snackImpactColors = useMemo(() => configToColors(snackImpactConfig), [snackImpactConfig])
+    const snackImpactHidden = useMemo(() => configToHidden(snackImpactConfig), [snackImpactConfig])
 
     return (
         <div className="space-y-10">
@@ -169,6 +228,7 @@ export const ChartsPage = () => {
                     title="주간 기분 트렌드"
                     isLoading={moodTrend.isLoading}
                     error={moodTrend.error}
+                    onSettingsClick={() => setActiveModal('mood-trend')}
                 >
                     <div className="grid grid-cols-2 gap-4">
                         <div className="h-64">
@@ -177,7 +237,9 @@ export const ChartsPage = () => {
                                     data={moodTrend.data.data}
                                     xKey="week"
                                     dataKeys={['happy', 'tired', 'stressed']}
-                                    labels={{ happy: '행복', tired: '피곤', stressed: '스트레스' }}
+                                    labels={moodTrendLabels}
+                                    colors={moodTrendColors}
+                                    hiddenKeys={moodTrendHidden}
                                 />
                             )}
                         </div>
@@ -187,7 +249,9 @@ export const ChartsPage = () => {
                                     data={moodTrend.data.data}
                                     xKey="week"
                                     dataKeys={['happy', 'tired', 'stressed']}
-                                    labels={{ happy: '행복', tired: '피곤', stressed: '스트레스' }}
+                                    labels={moodTrendLabels}
+                                    colors={moodTrendColors}
+                                    hiddenKeys={moodTrendHidden}
                                 />
                             )}
                         </div>
@@ -197,6 +261,7 @@ export const ChartsPage = () => {
                     title="주간 운동 트렌드"
                     isLoading={workoutTrend.isLoading}
                     error={workoutTrend.error}
+                    onSettingsClick={() => setActiveModal('workout-trend')}
                 >
                     <div className="grid grid-cols-2 gap-4">
                         <div className="h-64">
@@ -205,7 +270,9 @@ export const ChartsPage = () => {
                                     data={workoutTrend.data.data}
                                     xKey="week"
                                     dataKeys={['running', 'cycling', 'stretching']}
-                                    labels={{ running: '러닝', cycling: '사이클', stretching: '스트레칭' }}
+                                    labels={workoutTrendLabels}
+                                    colors={workoutTrendColors}
+                                    hiddenKeys={workoutTrendHidden}
                                 />
                             )}
                         </div>
@@ -215,7 +282,9 @@ export const ChartsPage = () => {
                                     data={workoutTrend.data.data}
                                     xKey="week"
                                     dataKeys={['running', 'cycling', 'stretching']}
-                                    labels={{ running: '러닝', cycling: '사이클', stretching: '스트레칭' }}
+                                    labels={workoutTrendLabels}
+                                    colors={workoutTrendColors}
+                                    hiddenKeys={workoutTrendHidden}
                                 />
                             )}
                         </div>
@@ -228,6 +297,7 @@ export const ChartsPage = () => {
                     title="커피 섭취량 vs 생산성"
                     isLoading={coffeeConsumption.isLoading}
                     error={coffeeConsumption.error}
+                    onSettingsClick={() => setActiveModal('coffee-consumption')}
                 >
                     <div className="h-80">
                         {coffeeConsumption.data && (
@@ -243,6 +313,8 @@ export const ChartsPage = () => {
                                 xLabel="커피 (잔/일)"
                                 primaryLabel="버그 수"
                                 secondaryLabel="생산성"
+                                colors={coffeeConsumptionColors}
+                                hiddenKeys={coffeeConsumptionHidden}
                             />
                         )}
                     </div>
@@ -251,6 +323,7 @@ export const ChartsPage = () => {
                     title="스낵 섭취 vs 사기"
                     isLoading={snackImpact.isLoading}
                     error={snackImpact.error}
+                    onSettingsClick={() => setActiveModal('snack-impact')}
                 >
                     <div className="h-80">
                         {snackImpact.data && (
@@ -266,6 +339,8 @@ export const ChartsPage = () => {
                                 xLabel="스낵 (개)"
                                 primaryLabel="회의 불참"
                                 secondaryLabel="사기"
+                                colors={snackImpactColors}
+                                hiddenKeys={snackImpactHidden}
                             />
                         )}
                     </div>
@@ -278,12 +353,35 @@ export const ChartsPage = () => {
                 items={coffeeBrandsConfig}
                 onApply={(items) => setSettings('coffee-brands', items)}
             />
-
             <ChartSettingsModal
                 isOpen={activeModal === 'snack-brands'}
                 onClose={() => setActiveModal(null)}
                 items={snackBrandsConfig}
                 onApply={(items) => setSettings('snack-brands', items)}
+            />
+            <ChartSettingsModal
+                isOpen={activeModal === 'mood-trend'}
+                onClose={() => setActiveModal(null)}
+                items={moodTrendConfig}
+                onApply={(items) => setSettings('mood-trend', items)}
+            />
+            <ChartSettingsModal
+                isOpen={activeModal === 'workout-trend'}
+                onClose={() => setActiveModal(null)}
+                items={workoutTrendConfig}
+                onApply={(items) => setSettings('workout-trend', items)}
+            />
+            <ChartSettingsModal
+                isOpen={activeModal === 'coffee-consumption'}
+                onClose={() => setActiveModal(null)}
+                items={coffeeConsumptionConfig}
+                onApply={(items) => setSettings('coffee-consumption', items)}
+            />
+            <ChartSettingsModal
+                isOpen={activeModal === 'snack-impact'}
+                onClose={() => setActiveModal(null)}
+                items={snackImpactConfig}
+                onApply={(items) => setSettings('snack-impact', items)}
             />
         </div>
     )
